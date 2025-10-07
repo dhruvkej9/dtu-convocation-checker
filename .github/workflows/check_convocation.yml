@@ -22,12 +22,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       # Step 3: Install Playwright and dependencies
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install pytest-playwright playwright -U
+          pip install requests
           playwright install chromium
           playwright install-deps chromium
       
