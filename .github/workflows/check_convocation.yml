@@ -3,8 +3,8 @@ name: DTU Convocation Checker
 on:
   # Schedule to run twice daily - at 9 AM and 6 PM IST
   schedule:
-    - cron: '30 3 * * *'  # 9:00 AM IST (3:30 AM UTC)
-    - cron: '30 12 * * *' # 6:00 PM IST (12:30 PM UTC)
+    - cron: '30 8 * * *'  # 9:00 AM IST (3:30 AM UTC)
+    - cron: '30 16 * * *' # 6:00 PM IST (12:30 PM UTC)
   
   # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
