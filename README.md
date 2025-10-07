@@ -2,6 +2,10 @@
 
 An automated system that checks the DTU Convocation portal twice daily for multiple roll number variations and sends notifications via Telegram with screenshots.
 
+## ✅ Status: TESTED AND WORKING!
+
+The script has been tested successfully and is ready to deploy to GitHub Actions.
+
 ## 📋 What This Does
 
 - Automatically logs into the DTU Convocation portal

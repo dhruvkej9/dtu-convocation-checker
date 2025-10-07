@@ -39,7 +39,7 @@ jobs:
           DATE_OF_BIRTH: ${{ secrets.DATE_OF_BIRTH }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python check_convocation.py
+        run: python main.py
       
       # Step 5: Upload screenshots as artifact (backup)
       - name: Upload screenshots

@@ -93,9 +93,17 @@ def check_single_roll_number(page, name, roll_number, dob):
         # Click login and wait for response
         print("Logging in...")
         # Note: The page doesn't navigate, it updates content in place
-        page.click('button:has-text("Log In")')
+        # Try multiple selectors for the login button
+        try:
+            # Use click with no_wait_after to handle pages that may or may not navigate
+            page.locator('input[type="submit"][value="Log In"]').click(timeout=5000)
+        except:
+            try:
+                page.locator('button:has-text("Log In")').click(timeout=5000)
+            except:
+                page.locator('#signin').click(timeout=5000)
         # Wait for the response to appear (page updates without full reload)
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(4000)
         
         # Get page information
         # Extract the convocation title from the h2 heading (e.g., "Convocation 2024")
