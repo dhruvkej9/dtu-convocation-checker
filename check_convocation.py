@@ -1,6 +1,6 @@
 """
-DTU Convocation Portal Checker
-This script automates login to DTU convocation portal and checks status
+DTU Convocation Portal Checker - Multi Roll Number Version
+This script automates login to DTU convocation portal and checks multiple roll numbers
 """
 
 import os
@@ -8,17 +8,16 @@ import sys
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 import requests
-import base64
 
-def send_telegram_message(bot_token, chat_id, message, screenshot_path=None):
+def send_telegram_message(bot_token, chat_id, message, screenshot_paths=None):
     """
-    Sends a message to Telegram, optionally with a screenshot
+    Sends a message to Telegram, optionally with multiple screenshots
     
     Args:
         bot_token: Your Telegram bot token
         chat_id: Your Telegram chat ID
         message: The text message to send
-        screenshot_path: Path to screenshot file (optional)
+        screenshot_paths: List of screenshot file paths (optional)
     """
     try:
         # First send the text message
@@ -30,132 +29,234 @@ def send_telegram_message(bot_token, chat_id, message, screenshot_path=None):
         }
         response = requests.post(url, data=data)
         
-        # If we have a screenshot, send it as a photo
-        if screenshot_path and os.path.exists(screenshot_path):
-            url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
-            with open(screenshot_path, 'rb') as photo:
-                files = {'photo': photo}
-                data = {'chat_id': chat_id}
-                requests.post(url, data=data, files=files)
+        # If we have screenshots, send them as a media group
+        if screenshot_paths:
+            for i, screenshot_path in enumerate(screenshot_paths):
+                if os.path.exists(screenshot_path):
+                    url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+                    with open(screenshot_path, 'rb') as photo:
+                        files = {'photo': photo}
+                        caption = f"Screenshot {i+1} of {len(screenshot_paths)}"
+                        data = {'chat_id': chat_id, 'caption': caption}
+                        requests.post(url, data=data, files=files)
         
         return response.json()
     except Exception as e:
         print(f"Error sending Telegram message: {e}")
         return None
 
-def check_convocation_portal():
+def check_single_roll_number(page, name, roll_number, dob):
     """
-    Main function that checks the DTU convocation portal
-    Returns: tuple of (status_message, screenshot_path)
+    Checks a single roll number on the portal
+    
+    Args:
+        page: Playwright page object
+        name: Student name
+        roll_number: Roll number to check
+        dob: Date of birth
+        
+    Returns:
+        Dictionary with status information
     """
-    # Get credentials from environment variables (kept secure in GitHub Secrets)
-    name = os.getenv('STUDENT_NAME')
-    roll_number = os.getenv('ROLL_NUMBER')
-    dob = os.getenv('DATE_OF_BIRTH')
-    
-    # Validate that we have all required credentials
-    if not all([name, roll_number, dob]):
-        return "❌ ERROR: Missing credentials in GitHub Secrets", None
-    
-    print(f"Starting check at {datetime.now()}")
-    print(f"Checking for Roll Number: {roll_number}")
-    
-    screenshot_path = "screenshot.png"
-    status_message = ""
-    page_title = ""
+    result = {
+        'roll_number': roll_number,
+        'status': '',
+        'page_title': '',
+        'screenshot_path': None,
+        'success': False
+    }
     
     try:
-        # Start Playwright - this launches a real browser in the background
+        print(f"\n{'='*50}")
+        print(f"Checking Roll Number: {roll_number}")
+        print(f"{'='*50}")
+        
+        # Navigate to the portal fresh for each check
+        print("Navigating to portal...")
+        page.goto('https://www.convocation.dtu.ac.in/index.php', 
+                 wait_until='networkidle', timeout=30000)
+        
+        # Wait for page to be ready
+        page.wait_for_timeout(1500)
+        
+        # Fill in the login form
+        print("Filling credentials...")
+        page.fill('input[placeholder="Enter Name"]', name)
+        page.fill('input[placeholder="Enter Roll No"]', roll_number)
+        page.fill('input[placeholder="Date of Birth"]', dob)
+        
+        # Wait a moment for form to be ready
+        page.wait_for_timeout(1000)
+        
+        # Click login and wait for response
+        print("Logging in...")
+        page.click('button:has-text("Log In")')
+        page.wait_for_load_state('networkidle', timeout=15000)
+        page.wait_for_timeout(2000)
+        
+        # Get page information
+        result['page_title'] = page.title()
+        page_content = page.content()
+        
+        # Analyze the response to determine status
+        # The portal returns different messages based on whether your roll number is found
+        if "Roll No Not Found" in page_content:
+            result['status'] = "❌ Roll No Not Found"
+            result['status_detail'] = "Your roll number is not yet in the convocation system."
+        elif "Roll No Found" in page_content or "successfully" in page_content.lower():
+            result['status'] = "✅ ROLL NUMBER FOUND!"
+            result['status_detail'] = "Your convocation details are available! Check the portal immediately."
+        elif "Invalid" in page_content or "incorrect" in page_content.lower():
+            result['status'] = "⚠️ Invalid Credentials"
+            result['status_detail'] = "The credentials might be incorrect or there's an issue with this roll number format."
+        else:
+            result['status'] = "❔ Status Unknown"
+            result['status_detail'] = "The portal responded but the status is unclear."
+        
+        # Take a screenshot with a unique name for this roll number
+        # We sanitize the roll number to create a valid filename by replacing slashes
+        safe_roll_number = roll_number.replace('/', '_')
+        screenshot_path = f"screenshot_{safe_roll_number}.png"
+        page.screenshot(path=screenshot_path, full_page=True)
+        result['screenshot_path'] = screenshot_path
+        
+        result['success'] = True
+        print(f"✓ Check completed: {result['status']}")
+        
+    except Exception as e:
+        result['status'] = "❌ Error"
+        result['status_detail'] = f"An error occurred while checking: {str(e)}"
+        print(f"✗ Error checking {roll_number}: {e}")
+    
+    return result
+
+def check_convocation_portal():
+    """
+    Main function that checks the DTU convocation portal for multiple roll numbers
+    Returns: List of results for each roll number checked
+    """
+    # Get credentials from environment variables
+    name = os.getenv('STUDENT_NAME')
+    roll_numbers_str = os.getenv('ROLL_NUMBERS')  # Now expects comma-separated values
+    dob = os.getenv('DATE_OF_BIRTH')
+    
+    # Validate credentials
+    if not all([name, roll_numbers_str, dob]):
+        return [{
+            'roll_number': 'N/A',
+            'status': '❌ Configuration Error',
+            'status_detail': 'Missing credentials in GitHub Secrets. Check STUDENT_NAME, ROLL_NUMBERS, and DATE_OF_BIRTH.',
+            'page_title': 'Error',
+            'screenshot_path': None,
+            'success': False
+        }]
+    
+    # Parse the comma-separated roll numbers into a list
+    # This allows you to check as many roll number variations as you need
+    roll_numbers = [rn.strip() for rn in roll_numbers_str.split(',')]
+    
+    print(f"Starting checks at {datetime.now()}")
+    print(f"Student: {name}")
+    print(f"Roll numbers to check: {len(roll_numbers)}")
+    for rn in roll_numbers:
+        print(f"  - {rn}")
+    
+    results = []
+    
+    try:
+        # Start Playwright and create a browser instance
+        # We'll reuse the same browser for all checks to be more efficient
         with sync_playwright() as p:
-            # Launch browser in headless mode (no visible window)
-            # We use chromium because it's lightweight and reliable
             browser = p.chromium.launch(headless=True)
-            
-            # Create a new browser context (like an incognito window)
             context = browser.new_context(
                 viewport={'width': 1280, 'height': 720},
                 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             )
-            
-            # Open a new page
             page = context.new_page()
             
-            print("Navigating to DTU convocation portal...")
-            # Go to the login page
-            page.goto('https://www.convocation.dtu.ac.in/index.php', 
-                     wait_until='networkidle', timeout=30000)
+            # Check each roll number sequentially
+            # We do this one at a time to avoid overwhelming the portal
+            for roll_number in roll_numbers:
+                result = check_single_roll_number(page, name, roll_number, dob)
+                results.append(result)
+                
+                # Small delay between checks to be respectful to the server
+                if roll_number != roll_numbers[-1]:  # Not the last one
+                    page.wait_for_timeout(2000)
             
-            # Get the page title
-            page_title = page.title()
-            print(f"Page title: {page_title}")
-            
-            # Fill in the login form
-            # We use fill() which is more reliable than type()
-            print("Filling in credentials...")
-            
-            # Fill Name field (looking for input with placeholder "Enter Name")
-            page.fill('input[placeholder="Enter Name"]', name)
-            
-            # Fill Roll Number field
-            page.fill('input[placeholder="Enter Roll No"]', roll_number)
-            
-            # Fill Date of Birth field
-            page.fill('input[placeholder="Date of Birth"]', dob)
-            
-            # Wait a moment for the form to be ready
-            page.wait_for_timeout(1000)
-            
-            print("Clicking login button...")
-            # Click the Log In button and wait for navigation
-            page.click('button:has-text("Log In")')
-            
-            # Wait for the page to load after login
-            # This is crucial - we wait for network to be idle
-            page.wait_for_load_state('networkidle', timeout=15000)
-            
-            # Additional wait to ensure dynamic content loads
-            page.wait_for_timeout(2000)
-            
-            # Get the updated page title after login
-            page_title = page.title()
-            
-            # Check what message is displayed on the page
-            page_content = page.content()
-            
-            # Look for common status messages
-            if "Roll No Not Found" in page_content:
-                status_message = "⏳ <b>Roll No Not Found</b>\n\nYour roll number is not yet in the system. This is normal before convocation details are released."
-            elif "Roll No Found" in page_content or "Convocation" in page_content:
-                status_message = "🎉 <b>ROLL NUMBER FOUND!</b>\n\nYour convocation details are now available! Check the portal."
-            elif "Invalid" in page_content or "Error" in page_content:
-                status_message = "⚠️ <b>Error or Invalid Credentials</b>\n\nThere might be an issue with the credentials or the portal."
-            else:
-                # If we can't determine the status, just report what we see
-                status_message = "ℹ️ <b>Status Unknown</b>\n\nThe portal responded but the status is unclear. Check the screenshot."
-            
-            print(f"Status detected: {status_message}")
-            
-            # Take a screenshot of the entire page
-            print("Capturing screenshot...")
-            page.screenshot(path=screenshot_path, full_page=True)
-            
-            # Close browser
             browser.close()
             
-            return status_message, screenshot_path, page_title
-            
     except Exception as e:
-        error_msg = f"❌ <b>Error occurred:</b>\n\n{str(e)}"
-        print(f"Error: {e}")
-        return error_msg, None, "Error"
+        print(f"Critical error: {e}")
+        results.append({
+            'roll_number': 'All',
+            'status': '❌ Critical Error',
+            'status_detail': f"Failed to run checks: {str(e)}",
+            'page_title': 'Error',
+            'screenshot_path': None,
+            'success': False
+        })
+    
+    return results
+
+def format_notification_message(results):
+    """
+    Creates a formatted message combining all check results
+    
+    Args:
+        results: List of result dictionaries from checking each roll number
+        
+    Returns:
+        Formatted HTML message string
+    """
+    current_time = datetime.now().strftime("%d %B %Y, %I:%M %p IST")
+    
+    # Start building the message with header
+    message = f"""🎓 <b>DTU Convocation Multi-Check Report</b>
+
+📅 <b>Check Time:</b> {current_time}
+👤 <b>Student:</b> {os.getenv('STUDENT_NAME')}
+🔢 <b>Roll Numbers Checked:</b> {len(results)}
+
+"""
+    
+    # Add details for each roll number checked
+    # This creates a clear, organized report showing the status of each variation
+    for i, result in enumerate(results, 1):
+        message += f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<b>Check #{i}: {result['roll_number']}</b>
+
+{result['status']}
+{result['status_detail']}
+
+📄 Page Title: {result['page_title']}
+"""
+        
+        # Add extra spacing between results for readability
+        if i < len(results):
+            message += "\n"
+    
+    # Add footer with helpful information
+    message += f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 <b>What This Means:</b>
+• If both show "Not Found": Normal before convocation announcement
+• If one is "Found": Use that roll number format on the portal
+• If results differ: The portal may prefer one format over the other
+
+<i>Automated check running twice daily at 9 AM and 6 PM IST</i>
+"""
+    
+    return message
 
 def main():
     """
     Main execution function
     """
-    print("=" * 50)
-    print("DTU CONVOCATION CHECKER STARTED")
-    print("=" * 50)
+    print("=" * 60)
+    print("DTU CONVOCATION MULTI-ROLL NUMBER CHECKER STARTED")
+    print("=" * 60)
     
     # Get Telegram credentials
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -165,35 +266,33 @@ def main():
         print("ERROR: Telegram credentials not found in secrets")
         sys.exit(1)
     
-    # Run the check
-    status_message, screenshot_path, page_title = check_convocation_portal()
+    # Run all checks
+    results = check_convocation_portal()
     
-    # Prepare the full message
-    current_time = datetime.now().strftime("%d %B %Y, %I:%M %p IST")
+    # Format the notification message
+    message = format_notification_message(results)
     
-    full_message = f"""
-🎓 <b>DTU Convocation Portal Check</b>
-
-📅 <b>Check Time:</b> {current_time}
-📄 <b>Page Title:</b> {page_title}
-
-{status_message}
-
-<i>This is an automated check. The portal is checked twice daily.</i>
-"""
+    # Collect all screenshot paths that were successfully created
+    screenshot_paths = [r['screenshot_path'] for r in results if r['screenshot_path']]
     
-    # Send notification
-    print("Sending Telegram notification...")
-    result = send_telegram_message(bot_token, chat_id, full_message, screenshot_path)
+    # Send the notification with all screenshots
+    print("\nSending Telegram notification...")
+    send_result = send_telegram_message(bot_token, chat_id, message, screenshot_paths)
     
-    if result:
+    if send_result:
         print("✓ Notification sent successfully!")
     else:
         print("✗ Failed to send notification")
     
-    print("=" * 50)
-    print("CHECK COMPLETED")
-    print("=" * 50)
+    # Print summary to logs
+    print("\n" + "=" * 60)
+    print("CHECK SUMMARY")
+    print("=" * 60)
+    for result in results:
+        print(f"{result['roll_number']}: {result['status']}")
+    print("=" * 60)
+    print("ALL CHECKS COMPLETED")
+    print("=" * 60)
 
 if __name__ == "__main__":
     main()
