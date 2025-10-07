@@ -16,7 +16,7 @@ jobs:
     steps:
       # Step 1: Get the code from repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       # Step 2: Set up Python environment
       - name: Set up Python
@@ -35,17 +35,17 @@ jobs:
       - name: Run convocation checker
         env:
           STUDENT_NAME: ${{ secrets.STUDENT_NAME }}
-          ROLL_NUMBER: ${{ secrets.ROLL_NUMBER }}
+          ROLL_NUMBERS: ${{ secrets.ROLL_NUMBERS }}
           DATE_OF_BIRTH: ${{ secrets.DATE_OF_BIRTH }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python check_convocation.py
       
-      # Step 5: Upload screenshot as artifact (backup)
-      - name: Upload screenshot
+      # Step 5: Upload screenshots as artifact (backup)
+      - name: Upload screenshots
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: convocation-screenshot
-          path: screenshot.png
+          name: convocation-screenshots
+          path: screenshot_*.png
           retention-days: 7
