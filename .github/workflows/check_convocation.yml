@@ -27,7 +27,7 @@ jobs:
       # Step 3: Install Playwright and dependencies
       - name: Install dependencies
         run: |
-          pip install playwright requests
+          pip install -r requirements.txt
           playwright install chromium
           playwright install-deps chromium
       

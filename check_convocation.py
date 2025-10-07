@@ -74,15 +74,17 @@ def check_single_roll_number(page, name, roll_number, dob):
         # Navigate to the portal fresh for each check
         print("Navigating to portal...")
         page.goto('https://www.convocation.dtu.ac.in/index.php', 
-                 wait_until='networkidle', timeout=30000)
+                 wait_until='domcontentloaded', timeout=30000)
         
         # Wait for page to be ready
-        page.wait_for_timeout(1500)
+        page.wait_for_timeout(2000)
         
         # Fill in the login form
         print("Filling credentials...")
         page.fill('input[placeholder="Enter Name"]', name)
+        page.wait_for_timeout(500)
         page.fill('input[placeholder="Enter Roll No"]', roll_number)
+        page.wait_for_timeout(500)
         page.fill('input[placeholder="Date of Birth"]', dob)
         
         # Wait a moment for form to be ready
@@ -90,12 +92,19 @@ def check_single_roll_number(page, name, roll_number, dob):
         
         # Click login and wait for response
         print("Logging in...")
+        # Note: The page doesn't navigate, it updates content in place
         page.click('button:has-text("Log In")')
-        page.wait_for_load_state('networkidle', timeout=15000)
-        page.wait_for_timeout(2000)
+        # Wait for the response to appear (page updates without full reload)
+        page.wait_for_timeout(3000)
         
         # Get page information
-        result['page_title'] = page.title()
+        # Extract the convocation title from the h2 heading (e.g., "Convocation 2024")
+        try:
+            convocation_title = page.locator('h2').first.inner_text()
+            result['page_title'] = convocation_title
+        except:
+            result['page_title'] = page.title()  # Fallback to browser title
+        
         page_content = page.content()
         
         # Analyze the response to determine status
@@ -167,10 +176,15 @@ def check_convocation_portal():
         # Start Playwright and create a browser instance
         # We'll reuse the same browser for all checks to be more efficient
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            # Launch browser with args to handle SSL issues
+            browser = p.chromium.launch(
+                headless=True,
+                args=['--ignore-certificate-errors', '--ignore-certificate-errors-spki-list']
+            )
             context = browser.new_context(
                 viewport={'width': 1280, 'height': 720},
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                ignore_https_errors=True  # Handle SSL certificate issues
             )
             page = context.new_page()
             
@@ -229,7 +243,7 @@ def format_notification_message(results):
 {result['status']}
 {result['status_detail']}
 
-📄 Page Title: {result['page_title']}
+📄 <b>Convocation:</b> {result['page_title']}
 """
         
         # Add extra spacing between results for readability
