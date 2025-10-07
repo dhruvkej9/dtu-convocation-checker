@@ -200,6 +200,9 @@ def check_convocation_portal():
             # We do this one at a time to avoid overwhelming the portal
             for roll_number in roll_numbers:
                 result = check_single_roll_number(page, name, roll_number, dob)
+                
+                # Reload the page to ensure it's fresh
+                page.reload(wait_until='domcontentloaded', timeout=20000)
                 results.append(result)
                 
                 # Small delay between checks to be respectful to the server
