@@ -21,53 +21,74 @@ The script has been tested successfully and is ready to deploy to GitHub Actions
 1. Click the **"Fork"** button at the top right of this page
 2. This creates your own copy of the repository
 
-### Step 2: Create a Telegram Bot
+### Step 2: Set Up Telegram Bot (Your Notification Channel)
 
-1. Open Telegram and search for **@BotFather**
-2. Send `/newbot` command
-3. Follow the prompts to create your bot
-4. **Save the Bot Token** (looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
+First, we need to create a way for the automation to reach you. Telegram is perfect because it's free, reliable, and easy to set up.
 
-### Step 3: Get Your Telegram Chat ID
+**Creating your Telegram bot:**
+1. Open Telegram and search for "BotFather" (the official bot creation tool)
+2. Start a chat and send the command `/newbot`
+3. Give your bot a name (like "DTU Convocation Monitor")
+4. Give it a username (must end in 'bot', like "dtu_convocation_check_bot")
+5. BotFather will give you a **token** that looks like `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`. Save this carefully.
 
-1. Search for **@userinfobot** on Telegram
-2. Start a chat with it
-3. It will send you your **Chat ID** (looks like: `123456789`)
-4. **Save this number**
+**Getting your Chat ID:**
+1. Search for your new bot in Telegram and start a conversation
+2. Send any message to it (like "Hello")
+3. Open this URL in your browser: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
+   (Replace `<YOUR_BOT_TOKEN>` with your actual token)
+4. Look for `"chat":{"id":` followed by a number. That's your **chat ID**. Save it.
 
-### Step 4: Add GitHub Secrets
+### Step 3: Add GitHub Secrets
 
-1. Go to your forked repository on GitHub
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **"New repository secret"** and add these 5 secrets:
+This is where you'll securely store your sensitive information. GitHub Secrets are encrypted and never exposed in logs or screenshots, which keeps your credentials completely safe.
+
+1. In your repository, click on "Settings" (top menu)
+2. In the left sidebar, click "Secrets and variables" → "Actions"
+3. Click "New repository secret" for each of the following:
+
+**Create these 5 secrets:**
 
 | Secret Name | Value | Example |
 |------------|-------|---------|
 | `STUDENT_NAME` | Your name in CAPITALS | `DHRUV KEJRWAL` |
 | `ROLL_NUMBERS` | Comma-separated roll numbers | `2K21/MC/053, 2K21/MC/53` |
-| `DATE_OF_BIRTH` | Date in dd-mm-yyyy format | `09-02-2004` |
-| `TELEGRAM_BOT_TOKEN` | Your bot token from Step 2 | `123456789:ABC...` |
-| `TELEGRAM_CHAT_ID` | Your chat ID from Step 3 | `123456789` |
+| `DATE_OF_BIRTH` | Date in dd-mm-yyyy format | `19-07-2000` |
+| `TELEGRAM_BOT_TOKEN` | Your bot token from [Step 2](#step-2-set-up-telegram-bot-your-notification-channel) | `123456789:ABC...` |
+| `TELEGRAM_CHAT_ID` | Your chat ID from [Step 2](#step-2-set-up-telegram-bot-your-notification-channel) | `123456789` |
+
+
+**How to add each secret:**
+- Click "New repository secret"
+- Enter the name exactly as shown above (case-sensitive!)
+- Paste the value
+- Click "Add secret"
+- Repeat for all 5 secrets
 
 **Important Notes:**
 - For `ROLL_NUMBERS`: Separate multiple roll numbers with commas
 - Example: `2K21/MC/053, 2K21/MC/53` (this checks both variations)
 - Name must be in CAPITALS exactly as shown on portal
-- Date format must be dd-mm-yyyy (e.g., 09-02-2004)
+- Date format must be dd-mm-yyyy (e.g., 19-07-2000)
 
-### Step 5: Enable GitHub Actions
+### Step 4: Enable GitHub Actions
 
 1. Go to the **Actions** tab in your repository
 2. Click **"I understand my workflows, go ahead and enable them"**
 3. The automation is now active!
 
-### Step 6: Test It (Optional)
+### Step 5: Test Your Automation
 
-1. Go to **Actions** tab
-2. Click on **"DTU Convocation Checker"** workflow
-3. Click **"Run workflow"** dropdown
-4. Click the green **"Run workflow"** button
-5. Wait a few minutes and check your Telegram for the notification
+Before waiting for the scheduled runs, let's test it immediately to make sure everything works:
+
+1. Go to the "Actions" tab in your repository
+2. Click on "DTU Convocation Checker" in the left sidebar
+3. Click the "Run workflow" button on the right
+4. Click the green "Run workflow" button in the dropdown
+5. Wait about 1-2 minutes, then refresh the page
+6. You should see a new workflow run appear
+7. Click on it to see the progress
+8. Check your Telegram - you should receive a message with a screenshot!
 
 ## 📱 What You'll Receive
 
@@ -110,11 +131,14 @@ Plus screenshots of each check!
 
 ## ⏰ Schedule
 
-The checker runs automatically:
-- **9:00 AM IST** (3:30 AM UTC) - Morning check
-- **6:00 PM IST** (12:30 PM UTC) - Evening check
+The workflow runs automatically **twice daily**:
 
-You can also run it manually anytime from the Actions tab.
+- **2:00 PM IST** (8:30 AM UTC) – Afternoon check  
+- **10:00 PM IST** (4:30 PM UTC) – Evening check
+
+You can also trigger it **manually anytime** from the GitHub Actions tab.
+
+💡 **Tip:** Learn more about cron syntax and customize schedules at [Crontab Guru](https://crontab.guru/#30_*_*_*).
 
 ## 🔧 Troubleshooting
 
@@ -137,8 +161,8 @@ Just add them to the `ROLL_NUMBERS` secret, separated by commas:
 Edit `.github/workflows/check_convocation.yml`:
 ```yaml
 schedule:
-  - cron: '30 3 * * *'   # 9:00 AM IST
-  - cron: '30 12 * * *'  # 6:00 PM IST
+  - cron: '30 8 * * *'   # 2:00 PM IST
+  - cron: '30 16 * * *'  # 10:00 PM IST
 ```
 
 Use [Crontab Guru](https://crontab.guru/) to create custom schedules.
