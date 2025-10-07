@@ -57,18 +57,20 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-echo "Installing dependencies..."
-pip install -q playwright requests
 
-echo "Installing Playwright browsers..."
+echo "Installing dependencies..."
+pip install pytest-playwright playwright requests -U
+
+echo "Installing Playwright browsers and dependencies..."
 playwright install chromium
+playwright install-deps chromium
 
 echo ""
 echo "Running the convocation checker..."
 echo "=================================="
 echo ""
 
-python3 check_convocation.py
+python3 main.py
 
 echo ""
 echo "=================================="
