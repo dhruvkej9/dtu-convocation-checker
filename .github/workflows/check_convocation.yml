@@ -11,7 +11,7 @@ on:
 
 jobs:
   check-convocation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     
     steps:
       # Step 1: Get the code from repository
@@ -27,7 +27,8 @@ jobs:
       # Step 3: Install Playwright and dependencies
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install pytest-playwright playwright -U
+          pip install requests
           playwright install chromium
           playwright install-deps chromium
       
