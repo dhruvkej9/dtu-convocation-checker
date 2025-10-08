@@ -8,6 +8,9 @@ import sys
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def send_telegram_message(bot_token, chat_id, message, screenshot_paths=None):
     """
@@ -93,15 +96,10 @@ def check_single_roll_number(page, name, roll_number, dob):
         # Click login and wait for response
         print("Logging in...")
         # Note: The page doesn't navigate, it updates content in place
-        # Try multiple selectors for the login button
-        try:
-            # Use click with no_wait_after to handle pages that may or may not navigate
-            page.locator('input[type="submit"][value="Log In"]').click(timeout=5000)
-        except:
-            try:
-                page.locator('button:has-text("Log In")').click(timeout=5000)
-            except:
-                page.locator('#signin').click(timeout=5000)
+        
+        # Use click with no_wait_after to handle pages that may or may not navigate
+        page.locator('input[type="submit"][value="Log In"]').click(timeout=5000)
+        
         # Wait for the response to appear (page updates without full reload)
         page.wait_for_timeout(4000)
         
@@ -234,7 +232,7 @@ def format_notification_message(results):
     Returns:
         Formatted HTML message string
     """
-    current_time = datetime.now().strftime("%d %B %Y, %I:%M %p IST")
+    current_time = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d %B %Y, %I:%M %p IST")
     
     # Start building the message with header
     message = f"""🎓 <b>DTU Convocation Multi-Check Report</b>
@@ -288,7 +286,7 @@ def main():
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
     
     if not bot_token or not chat_id:
-        print("ERROR: Telegram credentials not found in secrets")
+        print("ERROR: Telegram credentials not found in environment variables.")
         sys.exit(1)
     
     # Run all checks

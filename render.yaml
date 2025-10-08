@@ -1,0 +1,25 @@
+services:
+  # Define a web service for your FastAPI application
+  - type: web
+    name: dtu-convocation-checker
+    runtime: python
+    # Render will automatically detect and use your requirements.txt
+    buildCommand: pip install -r requirements.txt
+    # Command to start your FastAPI server
+    # We bind to 0.0.0.0 and use the PORT environment variable that Render provides
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    # Configuration options
+    envVars:
+      # Python should run in unbuffered mode so logs appear immediately
+      - key: PYTHON_UNBUFFERED
+        value: "1"
+      # Add any environment variables your main.py needs here
+      # For example, if you use Telegram bot tokens or API keys:
+      # - key: TELEGRAM_BOT_TOKEN
+      #   sync: false  # This means you'll set it manually in Render dashboard
+      # - key: TELEGRAM_CHAT_ID
+      #   sync: false
+    # Free tier settings
+    plan: free
+    # Health check endpoint - Render will ping this to know your app is running
+    healthCheckPath: /health
