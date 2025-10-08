@@ -10,7 +10,7 @@ The script has been tested successfully and is ready to deploy to GitHub Actions
 
 - Automatically logs into the DTU Convocation portal
 - Checks **multiple roll number variations** (e.g., with/without leading zeros)
-- Runs **twice daily** at 9 AM and 6 PM IST
+- Runs **twice daily** at 2 PM and 10 PM IST
 - Sends **Telegram notifications** with screenshots
 - **Completely FREE** - uses GitHub Actions (no credit card required)
 
@@ -97,7 +97,7 @@ You'll get a Telegram message like this:
 ```
 🎓 DTU Convocation Multi-Check Report
 
-📅 Check Time: 07 October 2025, 09:00 AM IST
+📅 Check Time: 07 October 2025, 2:00 PM IST
 👤 Student: DHRUV KEJRWAL
 🔢 Roll Numbers Checked: 2
 
