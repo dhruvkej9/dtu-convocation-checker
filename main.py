@@ -9,6 +9,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 import requests
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
 load_dotenv()
 
@@ -268,7 +269,7 @@ def format_notification_message(results):
 • If one is "Found": Use that roll number format on the portal
 • If results differ: The portal may prefer one format over the other
 
-<i>Automated check running twice daily at 9 AM and 6 PM IST</i>
+<i>Automated check running twice daily at 2 PM and 10 PM IST</i>
 """
     
     return message
