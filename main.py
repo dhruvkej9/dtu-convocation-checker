@@ -6,7 +6,7 @@ This script automates login to DTU convocation portal and checks multiple roll n
 import os
 import sys
 from datetime import datetime
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 import requests
 from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
@@ -96,8 +96,6 @@ def check_single_roll_number(page, name, roll_number, dob):
         
         # Click login and wait for response
         print("Logging in...")
-        # Note: The page doesn't navigate, it updates content in place
-        
         # Use click with no_wait_after to handle pages that may or may not navigate
         page.locator('input[type="submit"][value="Log In"]').click(timeout=5000)
         
@@ -115,7 +113,6 @@ def check_single_roll_number(page, name, roll_number, dob):
         page_content = page.content()
         
         # Analyze the response to determine status
-        # The portal returns different messages based on whether your roll number is found
         if "Roll No Not Found" in page_content:
             result['status'] = "❌ Roll No Not Found"
             result['status_detail'] = "Your roll number is not yet in the convocation system."
@@ -130,7 +127,6 @@ def check_single_roll_number(page, name, roll_number, dob):
             result['status_detail'] = "The portal responded but the status is unclear."
         
         # Take a screenshot with a unique name for this roll number
-        # We sanitize the roll number to create a valid filename by replacing slashes
         safe_roll_number = roll_number.replace('/', '_')
         screenshot_path = f"screenshot_{safe_roll_number}.png"
         page.screenshot(path=screenshot_path, full_page=True)
@@ -139,6 +135,10 @@ def check_single_roll_number(page, name, roll_number, dob):
         result['success'] = True
         print(f"✓ Check completed: {result['status']}")
         
+    except PlaywrightTimeoutError as e:
+        result['status'] = "⏱️ Timeout Error"
+        result['status_detail'] = f"The portal took too long to respond. This might be a temporary issue."
+        print(f"✗ Timeout checking {roll_number}: {e}")
     except Exception as e:
         result['status'] = "❌ Error"
         result['status_detail'] = f"An error occurred while checking: {str(e)}"
@@ -153,7 +153,7 @@ def check_convocation_portal():
     """
     # Get credentials from environment variables
     name = os.getenv('STUDENT_NAME')
-    roll_numbers_str = os.getenv('ROLL_NUMBERS')  # Now expects comma-separated values
+    roll_numbers_str = os.getenv('ROLL_NUMBERS')
     dob = os.getenv('DATE_OF_BIRTH')
     
     # Validate credentials
@@ -161,14 +161,13 @@ def check_convocation_portal():
         return [{
             'roll_number': 'N/A',
             'status': '❌ Configuration Error',
-            'status_detail': 'Missing credentials in GitHub Secrets. Check STUDENT_NAME, ROLL_NUMBERS, and DATE_OF_BIRTH.',
+            'status_detail': 'Missing credentials in environment variables. Check STUDENT_NAME, ROLL_NUMBERS, and DATE_OF_BIRTH.',
             'page_title': 'Error',
             'screenshot_path': None,
             'success': False
         }]
     
     # Parse the comma-separated roll numbers into a list
-    # This allows you to check as many roll number variations as you need
     roll_numbers = [rn.strip() for rn in roll_numbers_str.split(',')]
     
     print(f"Starting checks at {datetime.now()}")
@@ -178,48 +177,62 @@ def check_convocation_portal():
         print(f"  - {rn}")
     
     results = []
+    browser = None
     
     try:
         # Start Playwright and create a browser instance
-        # We'll reuse the same browser for all checks to be more efficient
         with sync_playwright() as p:
             # Launch browser with args to handle SSL issues
             browser = p.chromium.launch(
                 headless=True,
-                args=['--ignore-certificate-errors', '--ignore-certificate-errors-spki-list']
+                args=[
+                    '--ignore-certificate-errors',
+                    '--ignore-certificate-errors-spki-list',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu'
+                ]
             )
             context = browser.new_context(
                 viewport={'width': 1280, 'height': 720},
                 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                ignore_https_errors=True  # Handle SSL certificate issues
+                ignore_https_errors=True
             )
             page = context.new_page()
             
             # Check each roll number sequentially
-            # We do this one at a time to avoid overwhelming the portal
-            for roll_number in roll_numbers:
+            for i, roll_number in enumerate(roll_numbers):
                 result = check_single_roll_number(page, name, roll_number, dob)
-                
-                # Reload the page to ensure it's fresh
-                page.reload(wait_until='domcontentloaded', timeout=20000)
                 results.append(result)
                 
                 # Small delay between checks to be respectful to the server
-                if roll_number != roll_numbers[-1]:  # Not the last one
+                if i < len(roll_numbers) - 1:
                     page.wait_for_timeout(2000)
             
-            browser.close()
+            # Close browser properly
+            if browser:
+                browser.close()
             
     except Exception as e:
         print(f"Critical error: {e}")
-        results.append({
-            'roll_number': 'All',
-            'status': '❌ Critical Error',
-            'status_detail': f"Failed to run checks: {str(e)}",
-            'page_title': 'Error',
-            'screenshot_path': None,
-            'success': False
-        })
+        # Only add error result if we have no successful results
+        if not results:
+            results.append({
+                'roll_number': 'All',
+                'status': '❌ Critical Error',
+                'status_detail': f"Failed to run checks: {str(e)}",
+                'page_title': 'Error',
+                'screenshot_path': None,
+                'success': False
+            })
+        
+        # Ensure browser is closed even if there's an error
+        try:
+            if browser:
+                browser.close()
+        except:
+            pass
     
     return results
 
@@ -245,7 +258,6 @@ def format_notification_message(results):
 """
     
     # Add details for each roll number checked
-    # This creates a clear, organized report showing the status of each variation
     for i, result in enumerate(results, 1):
         message += f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 <b>Check #{i}: {result['roll_number']}</b>
@@ -269,7 +281,7 @@ def format_notification_message(results):
 • If one is "Found": Use that roll number format on the portal
 • If results differ: The portal may prefer one format over the other
 
-<i>Automated check running twice daily at 2 PM and 10 PM IST</i>
+<i>Automated check running via API trigger</i>
 """
     
     return message
