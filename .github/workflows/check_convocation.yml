@@ -27,7 +27,7 @@ jobs:
       # Step 3: Install Playwright and dependencies
       - name: Install dependencies
         run: |
-          pip install pytest-playwright playwright -U
+          pip install pytest-playwright playwright dotenv -U
           pip install requests
           playwright install chromium
           playwright install-deps chromium
