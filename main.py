@@ -96,8 +96,9 @@ def check_single_roll_number(page, name, roll_number, dob):
         
         # Click login and wait for response
         print("Logging in...")
-        # Use click with no_wait_after to handle pages that may or may not navigate
-        page.locator('input[type="submit"][value="Log In"]').click(timeout=5000)
+        # The page doesn't navigate, it updates content in place
+        # So we use no_wait_after=True to prevent waiting for navigation
+        page.locator('input[type="submit"][value="Log In"]').click(no_wait_after=True, timeout=5000)
         
         # Wait for the response to appear (page updates without full reload)
         page.wait_for_timeout(4000)
