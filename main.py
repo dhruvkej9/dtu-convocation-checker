@@ -283,6 +283,8 @@ def format_notification_message(results):
 • If results differ: The portal may prefer one format over the other
 
 <i>Automated check running via API trigger</i>
+
+https://www.convocation.dtu.ac.in/index.php
 """
     
     return message
