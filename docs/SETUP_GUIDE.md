@@ -20,7 +20,7 @@ This automation will check the DTU Convocation portal twice daily for your roll 
 
 1. Search for your new bot (from Step 1) in Telegram and start a conversation
 2. Send any message to it (like "Hello")
-3. Open this URL in your browser: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+3. Open this URL in your browser:   
    (Replace <YOUR_BOT_TOKEN> with your actual token)
 4. Look for "chat":{"id": followed by a number. That's your chat ID. Save it.
 
