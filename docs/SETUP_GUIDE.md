@@ -18,10 +18,11 @@ This automation will check the DTU Convocation portal twice daily for your roll 
 
 ### **Step 2: Get Your Chat ID (1 minute)**
 
-1. Search for **@userinfobot** on Telegram
-2. Start a chat with it by clicking "START"
-3. It will reply with your user information
-4. **SAVE YOUR CHAT ID** - It's a number like: `123456789`
+1. Search for your new bot (from Step 1) in Telegram and start a conversation
+2. Send any message to it (like "Hello")
+3. Open this URL in your browser: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+   (Replace <YOUR_BOT_TOKEN> with your actual token)
+4. Look for "chat":{"id": followed by a number. That's your chat ID. Save it.
 
 ### **Step 3: Start Your Bot (Important!)**
 
