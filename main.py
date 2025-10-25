@@ -118,9 +118,9 @@ def check_single_roll_number(page, name, roll_number, dob):
             result['status'] = "❌ Roll No Not Found"
             result['status_detail'] = "Your roll number is not yet in the convocation system."
         elif "Roll No Found" in page_content or "successfully" in page_content.lower():
-            result['success'] += 1
             result['status'] = "✅ ROLL NUMBER FOUND!"
             result['status_detail'] = "Your convocation details are available! Check the portal immediately."
+            result['success'] = True
         elif "Invalid" in page_content or "incorrect" in page_content.lower():
             result['status'] = "⚠️ Invalid Credentials"
             result['status_detail'] = "The credentials might be incorrect or there's an issue with this roll number format."
@@ -134,7 +134,6 @@ def check_single_roll_number(page, name, roll_number, dob):
         page.screenshot(path=screenshot_path, full_page=True)
         result['screenshot_path'] = screenshot_path
         
-        result['success'] = True
         print(f"✓ Check completed: {result['status']}")
         
     except PlaywrightTimeoutError as e:
@@ -250,10 +249,13 @@ def format_notification_message(results):
     """
     current_time = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d %B %Y, %I:%M %p IST")
     
+    # Count successful checks (where roll number was found)
+    successful_count = sum(1 for r in results if "✅ ROLL NUMBER FOUND!" in r.get('status', ''))
+    
     # Start building the message with header
     message = f"""🎓 <b>DTU Convocation Multi-Check Report</b>
 
-✅ <b>Successful Checks:</b> {sum(1 for r in results if r['success'])}
+✅ <b>Successful Checks:</b> {successful_count}
 📅 <b>Check Time:</b> {current_time}
 👤 <b>Student:</b> {os.getenv('STUDENT_NAME')}
 🔢 <b>Roll Numbers Checked:</b> {len(results)}
