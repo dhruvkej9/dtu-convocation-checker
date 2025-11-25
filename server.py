@@ -23,9 +23,25 @@ async def root():
     return {
         "message": "DTU Convocation Checker API",
         "endpoints": {
-            "/check": "Trigger convocation check",
-            "/health": "Health check endpoint"
+            "/check": "Trigger convocation check (async)",
+            "/check-sync": "Trigger convocation check (sync)",
+            "/health": "Health check endpoint",
+            "/wakeup": "Wake up status info"
         }
+    }
+
+
+@app.get("/wakeup")
+async def wakeup_info():
+    """
+    Endpoint to confirm the app is awake and provide status.
+    This can be used by external services to verify the app is running.
+    """
+    return {
+        "status": "awake",
+        "message": "App is running and ready to accept requests",
+        "timestamp": datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(),
+        "tip": "Use /health for cron jobs, /check to trigger convocation check"
     }
 
 @app.get("/health")

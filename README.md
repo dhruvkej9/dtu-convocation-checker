@@ -210,5 +210,52 @@ This is an educational project for automating legitimate access to your own conv
 
 ---
 
+## 🌐 Render Deployment Wake-Up Feature
+
+When deployed on Render's free tier, the app may spin down after inactivity. Use the wake-up utility to bring it back online.
+
+### Wake-Up Script (`wakeup.py`)
+
+A Playwright-based script to wake up the Render app by hitting the health endpoint.
+
+**Basic Usage:**
+```bash
+# Wake up the app (default 60s timeout)
+python wakeup.py
+
+# Custom timeout
+python wakeup.py --timeout 90
+
+# With retries
+python wakeup.py --retries 3 --timeout 60
+
+# Custom URL
+python wakeup.py --url https://dtu-convocation-checker.onrender.com/health
+```
+
+**Features:**
+- Waits up to 60 seconds for cold starts
+- Retry support for unreliable connections
+- Returns JSON response from health endpoint
+- Exit code 0 on success, 1 on failure
+
+### API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/` | API info and available endpoints |
+| `/health` | Health check (use for cron jobs) |
+| `/wakeup` | Wake-up status info |
+| `/check` | Trigger convocation check (async) |
+| `/check-sync` | Trigger convocation check (sync) |
+
+### Cron Job Setup
+
+For keeping the app alive, set up cron jobs:
+- **Health endpoint**: Hit `/health` every minute to keep app warm
+- **Check endpoint**: Hit `/check` 2 times daily for convocation checks
+
+---
+
 **Made with ❤️ for DTU students waiting for their convocation**
 dtu-convocation-checker

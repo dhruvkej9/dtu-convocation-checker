@@ -108,7 +108,7 @@ def check_single_roll_number(page, name, roll_number, dob):
         try:
             convocation_title = page.locator('h2').first.inner_text()
             result['page_title'] = convocation_title
-        except:
+        except Exception:
             result['page_title'] = page.title()  # Fallback to browser title
         
         page_content = page.content()
@@ -232,7 +232,7 @@ def check_convocation_portal():
         try:
             if browser:
                 browser.close()
-        except:
+        except Exception:
             pass
     
     return results
