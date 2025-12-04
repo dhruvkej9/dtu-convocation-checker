@@ -30,10 +30,11 @@ jobs:
 
       - name: Wake up Render App with Playwright
         id: wakeup
+        continue-on-error: true
         run: |
           echo "🚀 Waking up Render app using Playwright..."
           echo "⏰ Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          python wakeup.py --timeout 90 --retries 2
+          python wakeup.py --timeout 90 --retries 2 || true
 
       - name: Log Result
         if: always()
