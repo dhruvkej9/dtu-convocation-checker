@@ -1,98 +1,145 @@
-# 🎓 DTU Convocation Checker - Automated Multi-Roll Number Monitor
+# 🎓 DTU Convocation Checker
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Playwright](https://img.shields.io/badge/Playwright-enabled-brightgreen.svg)](https://playwright.dev/)
 
 An automated system that checks the DTU Convocation portal twice daily for multiple roll number variations and sends notifications via Telegram with screenshots.
 
-## ✅ Status: TESTED AND WORKING!
+## ✨ Features
 
-The script has been tested successfully and is ready to deploy to GitHub Actions.
+- 🔄 **Automated Monitoring** - Checks the DTU convocation portal twice daily
+- 🔢 **Multi-Roll Number Support** - Check multiple roll number variations simultaneously
+- 📱 **Telegram Notifications** - Instant alerts with screenshots
+- 🖼️ **Screenshot Capture** - Visual proof of portal status
+- ⏰ **Scheduled Runs** - Runs at 2:00 PM and 10:00 PM IST
+- 🆓 **100% Free** - Uses GitHub Actions (no credit card required)
+- 🐳 **Docker Ready** - Can be deployed to Render or any container platform
 
-## 📋 What This Does
+## 📋 Table of Contents
 
-- Automatically logs into the DTU Convocation portal
-- Checks **multiple roll number variations** (e.g., with/without leading zeros)
-- Runs **twice daily** at 2 PM and 10 PM IST
-- Sends **Telegram notifications** with screenshots
-- **Completely FREE** - uses GitHub Actions (no credit card required)
+- [Quick Start](#-quick-start)
+- [Prerequisites](#-prerequisites)
+- [Setup Guide](#-setup-guide)
+- [Configuration](#-configuration)
+- [Schedule](#-schedule)
+- [Sample Notification](#-sample-notification)
+- [Deployment Options](#-deployment-options)
+- [Troubleshooting](#-troubleshooting)
+- [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-## 🚀 Complete Setup Guide
+## 🚀 Quick Start
+
+1. **Fork** this repository
+2. **Create** a Telegram bot via [@BotFather](https://t.me/botfather)
+3. **Add** your credentials as GitHub Secrets
+4. **Enable** GitHub Actions
+5. **Done!** You'll receive notifications twice daily
+
+## 📦 Prerequisites
+
+- GitHub account (free)
+- Telegram account (free)
+- 10 minutes of setup time
+
+## 🔧 Setup Guide
 
 ### Step 1: Fork This Repository
 
 1. Click the **"Fork"** button at the top right of this page
 2. This creates your own copy of the repository
 
-### Step 2: Set Up Telegram Bot (Your Notification Channel)
+### Step 2: Set Up Telegram Bot
 
-First, we need to create a way for the automation to reach you. Telegram is perfect because it's free, reliable, and easy to set up.
+First, create a Telegram bot to receive notifications:
 
 **Creating your Telegram bot:**
-1. Open Telegram and search for "BotFather" (the official bot creation tool)
-2. Start a chat and send the command `/newbot`
-3. Give your bot a name (like "DTU Convocation Monitor")
-4. Give it a username (must end in 'bot', like "dtu_convocation_check_bot")
-5. BotFather will give you a **token** that looks like `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`. Save this carefully.
+
+1. Open Telegram and search for [@BotFather](https://t.me/botfather)
+2. Start a chat and send `/newbot`
+3. Give your bot a name (e.g., "DTU Convocation Monitor")
+4. Give it a username (must end in 'bot', e.g., `dtu_convocation_check_bot`)
+5. Save the **token** (looks like `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
 **Getting your Chat ID:**
+
 1. Search for your new bot in Telegram and start a conversation
-2. Send any message to it (like "Hello")
-3. Open this URL in your browser: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
-   (Replace `<YOUR_BOT_TOKEN>` with your actual token)
-4. Look for `"chat":{"id":` followed by a number. That's your **chat ID**. Save it.
+2. Send any message to it (e.g., "Hello")
+3. Open this URL in your browser (replace `<YOUR_BOT_TOKEN>` with your token):
+   ```
+   https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+   ```
+4. Look for `"chat":{"id":` followed by a number — that's your **Chat ID**
 
 ### Step 3: Add GitHub Secrets
 
-This is where you'll securely store your sensitive information. GitHub Secrets are encrypted and never exposed in logs or screenshots, which keeps your credentials completely safe.
+Store your credentials securely in GitHub Secrets:
 
-1. In your repository, click on "Settings" (top menu)
-2. In the left sidebar, click "Secrets and variables" → "Actions"
-3. Click "New repository secret" for each of the following:
+1. Go to your forked repository → **Settings** → **Secrets and variables** → **Actions**
+2. Click **"New repository secret"** for each of the following:
 
-**Create these 5 secrets:**
-
-| Secret Name | Value | Example |
-|------------|-------|---------|
+| Secret Name | Description | Example |
+|------------|-------------|---------|
 | `STUDENT_NAME` | Your name in CAPITALS | `DHRUV KEJRWAL` |
 | `ROLL_NUMBERS` | Comma-separated roll numbers | `2K21/MC/053, 2K21/MC/53` |
 | `DATE_OF_BIRTH` | Date in dd-mm-yyyy format | `19-07-2000` |
-| `TELEGRAM_BOT_TOKEN` | Your bot token from [Step 2](#step-2-set-up-telegram-bot-your-notification-channel) | `123456789:ABC...` |
-| `TELEGRAM_CHAT_ID` | Your chat ID from [Step 2](#step-2-set-up-telegram-bot-your-notification-channel) | `123456789` |
+| `TELEGRAM_BOT_TOKEN` | Bot token from Step 2 | `123456789:ABC...` |
+| `TELEGRAM_CHAT_ID` | Chat ID from Step 2 | `123456789` |
 
-
-**How to add each secret:**
-- Click "New repository secret"
-- Enter the name exactly as shown above (case-sensitive!)
-- Paste the value
-- Click "Add secret"
-- Repeat for all 5 secrets
-
-**Important Notes:**
-- For `ROLL_NUMBERS`: Separate multiple roll numbers with commas
-- Example: `2K21/MC/053, 2K21/MC/53` (this checks both variations)
-- Name must be in CAPITALS exactly as shown on portal
-- Date format must be dd-mm-yyyy (e.g., 19-07-2000)
+> **Note:** For `ROLL_NUMBERS`, separate multiple variations with commas to check different formats.
 
 ### Step 4: Enable GitHub Actions
 
 1. Go to the **Actions** tab in your repository
 2. Click **"I understand my workflows, go ahead and enable them"**
-3. The automation is now active!
 
-### Step 5: Test Your Automation
+### Step 5: Test Your Setup
 
-Before waiting for the scheduled runs, let's test it immediately to make sure everything works:
+Test your setup immediately:
 
-1. Go to the "Actions" tab in your repository
-2. Click on "DTU Convocation Checker" in the left sidebar
-3. Click the "Run workflow" button on the right
-4. Click the green "Run workflow" button in the dropdown
-5. Wait about 1-2 minutes, then refresh the page
-6. You should see a new workflow run appear
-7. Click on it to see the progress
-8. Check your Telegram - you should receive a message with a screenshot!
+1. Go to **Actions** → **DTU Convocation Checker**
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait 1-2 minutes
+4. Check your Telegram for the notification!
 
-## 📱 What You'll Receive
+## ⚙️ Configuration
 
-You'll get a Telegram message like this:
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STUDENT_NAME` | Yes | Student name in CAPITALS |
+| `ROLL_NUMBERS` | Yes | Comma-separated roll numbers |
+| `DATE_OF_BIRTH` | Yes | Date in dd-mm-yyyy format |
+| `TELEGRAM_BOT_TOKEN` | Yes | Telegram bot API token |
+| `TELEGRAM_CHAT_ID` | Yes | Telegram chat ID for notifications |
+
+## ⏰ Schedule
+
+The workflow runs automatically **twice daily**:
+
+| Time (IST) | Time (UTC) | Description |
+|------------|------------|-------------|
+| 2:00 PM | 8:30 AM | Afternoon check |
+| 10:00 PM | 4:30 PM | Evening check |
+
+You can also trigger it **manually anytime** from the GitHub Actions tab.
+
+### Customizing the Schedule
+
+Edit `.github/workflows/check_convocation.yml`:
+
+```yaml
+schedule:
+  - cron: '30 8 * * *'   # 2:00 PM IST
+  - cron: '30 16 * * *'  # 10:00 PM IST
+```
+
+Use [Crontab Guru](https://crontab.guru/) to create custom schedules.
+
+## 📱 Sample Notification
 
 ```
 🎓 DTU Convocation Multi-Check Report
@@ -124,48 +171,67 @@ Your roll number is not yet in the convocation system.
 • If one is "Found": Use that roll number format on the portal
 • If results differ: The portal may prefer one format over the other
 
-Automated check running twice daily at 9 AM and 6 PM IST
+Automated check running twice daily at 2 PM and 10 PM IST
 ```
 
 Plus screenshots of each check!
 
-## ⏰ Schedule
+## 🐳 Deployment Options
 
-The workflow runs automatically **twice daily**:
+### Option 1: GitHub Actions (Recommended)
 
-- **2:00 PM IST** (8:30 AM UTC) – Afternoon check  
-- **10:00 PM IST** (4:30 PM UTC) – Evening check
+The default deployment method. Simply fork and configure as described above.
 
-You can also trigger it **manually anytime** from the GitHub Actions tab.
+### Option 2: Render Deployment
 
-💡 **Tip:** Learn more about cron syntax and customize schedules at [Crontab Guru](https://crontab.guru/#30_*_*_*).
+Deploy as a web service on Render for API-based triggering:
+
+1. Create a new Web Service on [Render](https://render.com)
+2. Connect your forked repository
+3. Set the following:
+   - **Environment:** Docker
+   - **Build Command:** (auto-detected from Dockerfile)
+   - **Start Command:** (auto-detected from Dockerfile)
+4. Add environment variables in Render dashboard
+
+#### API Endpoints (Render Deployment)
+
+| Endpoint | Description |
+|----------|-------------|
+| `/` | API info and available endpoints |
+| `/health` | Health check (use for cron jobs) |
+| `/wakeup` | Wake-up status info |
+| `/check` | Trigger convocation check (async) |
+| `/check-sync` | Trigger convocation check (sync) |
+
+#### Wake-Up Script
+
+For Render's free tier, use the wake-up utility to prevent cold starts:
+
+```bash
+# Wake up the app (default 60s timeout)
+python wakeup.py
+
+# With custom timeout and retries
+python wakeup.py --timeout 90 --retries 3
+```
 
 ## 🔧 Troubleshooting
 
 ### Not receiving notifications?
 
-1. **Check your bot**: Send a message to your bot on Telegram first
-2. **Verify secrets**: Make sure all 5 secrets are added correctly
-3. **Check Actions tab**: Look for any error messages in the workflow runs
-4. **Date format**: Ensure it's dd-mm-yyyy (e.g., 09-02-2004, not 9-2-2004)
+1. **Start your bot**: Make sure you've sent a message to your bot first
+2. **Verify secrets**: Ensure all 5 secrets are added correctly
+3. **Check Actions tab**: Look for error messages in workflow runs
+4. **Date format**: Use dd-mm-yyyy (e.g., `09-02-2004`, not `9-2-2004`)
 
 ### Want to check more roll numbers?
 
-Just add them to the `ROLL_NUMBERS` secret, separated by commas:
+Add them to the `ROLL_NUMBERS` secret, separated by commas:
+
 ```
 2K21/MC/053, 2K21/MC/53, 2K21/MC/0053
 ```
-
-### Want to change the schedule?
-
-Edit `.github/workflows/check_convocation.yml`:
-```yaml
-schedule:
-  - cron: '30 8 * * *'   # 2:00 PM IST
-  - cron: '30 16 * * *'  # 10:00 PM IST
-```
-
-Use [Crontab Guru](https://crontab.guru/) to create custom schedules.
 
 ## 📊 How It Works
 
@@ -208,54 +274,40 @@ If you encounter issues:
 
 This is an educational project for automating legitimate access to your own convocation portal. Use responsibly and in accordance with DTU's terms of service.
 
----
+## 📂 Project Structure
 
-## 🌐 Render Deployment Wake-Up Feature
-
-When deployed on Render's free tier, the app may spin down after inactivity. Use the wake-up utility to bring it back online.
-
-### Wake-Up Script (`wakeup.py`)
-
-A Playwright-based script to wake up the Render app by hitting the health endpoint.
-
-**Basic Usage:**
-```bash
-# Wake up the app (default 60s timeout)
-python wakeup.py
-
-# Custom timeout
-python wakeup.py --timeout 90
-
-# With retries
-python wakeup.py --retries 3 --timeout 60
-
-# Custom URL
-python wakeup.py --url https://dtu-convocation-checker.onrender.com/health
+```
+dtu-convocation-checker/
+├── main.py                    # Main automation script
+├── server.py                  # FastAPI server for API deployment
+├── wakeup.py                  # Render wake-up utility
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Docker configuration
+├── render.yaml                # Render deployment config
+├── .github/
+│   └── workflows/
+│       ├── check_convocation.yml  # Main checker workflow
+│       └── keep_alive.yml         # Keep Render app alive
+└── docs/
+    ├── SETUP_GUIDE.md         # Detailed setup guide
+    ├── QUICK_REFERENCE.md     # Quick reference card
+    └── DEPLOYMENT.md          # Deployment documentation
 ```
 
-**Features:**
-- Waits up to 60 seconds for cold starts
-- Retry support for unreliable connections
-- Returns JSON response from health endpoint
-- Exit code 0 on success, 1 on failure
+## 📚 Documentation
 
-### API Endpoints
+- [Setup Guide](docs/SETUP_GUIDE.md) - Detailed step-by-step instructions
+- [Quick Reference](docs/QUICK_REFERENCE.md) - Quick lookup card
+- [Deployment Guide](docs/DEPLOYMENT.md) - Deployment options and details
 
-| Endpoint | Description |
-|----------|-------------|
-| `/` | API info and available endpoints |
-| `/health` | Health check (use for cron jobs) |
-| `/wakeup` | Wake-up status info |
-| `/check` | Trigger convocation check (async) |
-| `/check-sync` | Trigger convocation check (sync) |
+## 🤝 Contributing
 
-### Cron Job Setup
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-For keeping the app alive, set up cron jobs:
-- **Health endpoint**: Hit `/health` every minute to keep app warm
-- **Check endpoint**: Hit `/check` 2 times daily for convocation checks
+## 📄 License
+
+This project is open source and available under the MIT License.
 
 ---
 
 **Made with ❤️ for DTU students waiting for their convocation**
-dtu-convocation-checker
